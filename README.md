@@ -2,6 +2,8 @@
 
 Vue 3 and Vite demo platform for Khmer-language digital learning. It includes a course catalog, lessons, practice labs, quizzes, certificates, student profiles, discussions, and an admin course editor.
 
+The frontend also includes light/dark themes, toast notifications, admin confirmations, course filtering, and JSON backup/restore for browser data.
+
 ## Requirements
 
 - Node.js `^20.19.0` or `>=22.12.0`

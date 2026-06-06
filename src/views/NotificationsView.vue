@@ -1,4 +1,5 @@
 <script setup>
+import Swal from 'sweetalert2'
 import { useNotifications } from '@/composables/useNotifications'
 
 const {
@@ -7,6 +8,22 @@ const {
   markAllNotificationsRead,
   markNotificationRead,
 } = useNotifications()
+
+async function confirmClearNotifications() {
+  if (!notifications.value.length) return
+
+  const result = await Swal.fire({
+    title: 'លុបការជូនដំណឹងទាំងអស់?',
+    text: 'សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'លុបទាំងអស់',
+    cancelButtonText: 'បោះបង់',
+    confirmButtonColor: '#dc2626',
+  })
+
+  if (result.isConfirmed) clearNotifications()
+}
 </script>
 
 <template>
@@ -22,7 +39,7 @@ const {
           <button class="btn btn-outline-primary" type="button" @click="markAllNotificationsRead">
             Mark all read
           </button>
-          <button class="btn btn-outline-danger" type="button" @click="clearNotifications">
+          <button class="btn btn-outline-danger" type="button" @click="confirmClearNotifications">
             Clear
           </button>
         </div>

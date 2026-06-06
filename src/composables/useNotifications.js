@@ -19,6 +19,7 @@ function writeStorage(value) {
 }
 
 const notifications = ref(readStorage())
+const toasts = ref([])
 let storageOwner = getActiveUserId()
 
 subscribeToUserStorage(() => {
@@ -42,6 +43,13 @@ function addNotification({ title, message, type = 'info', to = '/dashboard' }) {
 
   notifications.value = [notification, ...notifications.value].slice(0, 30)
   writeStorage(notifications.value)
+
+  toasts.value = [notification, ...toasts.value].slice(0, 3)
+  window.setTimeout(() => dismissToast(notification.id), 4500)
+}
+
+function dismissToast(id) {
+  toasts.value = toasts.value.filter((toast) => toast.id !== id)
 }
 
 function markNotificationRead(id) {
@@ -66,9 +74,11 @@ export function useNotifications() {
 
   return {
     notifications,
+    toasts,
     unreadCount,
     addNotification,
     clearNotifications,
+    dismissToast,
     markAllNotificationsRead,
     markNotificationRead,
   }
