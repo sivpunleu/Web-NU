@@ -179,11 +179,14 @@ function saveProfile() {
             <div class="profile-hero__main">
               <div class="profile-avatar">
                 <img v-if="avatarPreview" :src="avatarPreview" :alt="`${form.name || 'Smart Learner'} profile`" />
-                <span v-else>{{ userInitials }}</span>
+                <span v-else class="profile-avatar__initials">{{ userInitials }}</span>
+                <span class="profile-avatar__status" aria-label="Account active">
+                  <i class="bi bi-check-lg"></i>
+                </span>
               </div>
               <div>
                 <span class="section-kicker">ប្រវត្តិរូប</span>
-                <h1>សួស្តី {{ currentUser?.name || 'អ្នករៀន' }}</h1>
+                <h1>{{ currentUser?.name || 'អ្នករៀន' }}</h1>
                 <p>
                   គ្រប់គ្រងព័ត៌មានគណនី គោលដៅសិក្សា និងមើលសង្ខេបវឌ្ឍនភាពរបស់អ្នកនៅកន្លែងតែមួយ។
                 </p>
@@ -259,7 +262,7 @@ function saveProfile() {
                 </div>
               </div>
 
-              <div class="row g-3">
+              <div class="row g-3 profile-fields-grid">
                 <div class="col-md-6">
                   <label class="form-label" for="profile-name">ឈ្មោះពេញ</label>
                   <div class="input-group profile-input">
@@ -332,13 +335,14 @@ function saveProfile() {
                   <i class="bi bi-speedometer2 me-2"></i>ទៅ Dashboard
                 </RouterLink>
                 <RouterLink class="btn btn-outline-secondary" to="/settings">
-                  <i class="bi bi-gear me-2"></i>Settings
+                  <i class="bi bi-gear me-2"></i>ការកំណត់
                 </RouterLink>
               </div>
             </form>
 
             <div class="profile-side-stack">
               <ProgressChart
+                class="profile-progress-card"
                 :value="averageProgress"
                 label="វឌ្ឍនភាពរៀន"
                 caption="មធ្យមភាគពីវគ្គដែលបានចុះឈ្មោះ"
@@ -390,6 +394,9 @@ function saveProfile() {
                     <div>
                       <strong>{{ course.title }}</strong>
                       <span>{{ getCourseProgress(course) }}% complete</span>
+                      <div class="profile-course-mini__progress" aria-hidden="true">
+                        <span :style="{ width: `${getCourseProgress(course)}%` }"></span>
+                      </div>
                     </div>
                   </RouterLink>
                 </div>

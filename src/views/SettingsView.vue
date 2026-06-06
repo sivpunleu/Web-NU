@@ -1,30 +1,22 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
+import Swal from 'sweetalert2'
 import Sidebar from '@/components/Sidebar.vue'
-import { readScopedStorage, writeScopedStorage } from '@/utils/userStorage'
+import { useNotifications } from '@/composables/useNotifications'
+import { useSettings } from '@/composables/useSettings'
+import {
+  downloadSmartLearnBackup,
+  parseSmartLearnBackup,
+  restoreSmartLearnBackup,
+} from '@/utils/dataBackup'
 
-const STORAGE_KEY = 'smartlearn_settings'
-
-const defaults = {
-  language: 'km',
-  theme: 'system',
-  emailNotifications: true,
-  courseReminders: true,
-  publicProfile: false,
-}
-
-function readSettings() {
-  return {
-    ...defaults,
-    ...readScopedStorage(STORAGE_KEY, {}),
-  }
-}
-
-const settings = reactive(readSettings())
+const { settings, saveSettings: persistSettings, resetSettings: resetStoredSettings } = useSettings()
+const { addNotification } = useNotifications()
 const saved = ref(false)
+const importInput = ref(null)
 
 function saveSettings() {
-  writeScopedStorage(STORAGE_KEY, settings)
+  persistSettings()
 
   saved.value = true
   window.setTimeout(() => {
@@ -32,9 +24,72 @@ function saveSettings() {
   }, 2400)
 }
 
-function resetSettings() {
-  Object.assign(settings, defaults)
-  saveSettings()
+async function resetSettings() {
+  const result = await Swal.fire({
+    title: 'Reset Settings?',
+    text: 'Theme និង preferences នឹងត្រឡប់ទៅតម្លៃដើម។',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Reset',
+    cancelButtonText: 'បោះបង់',
+    confirmButtonColor: '#2563eb',
+  })
+
+  if (!result.isConfirmed) return
+  resetStoredSettings()
+  saved.value = true
+}
+
+function exportData() {
+  const count = downloadSmartLearnBackup()
+  addNotification({
+    title: 'បាន Export ទិន្នន័យ',
+    message: `បានរក្សាទុក ${count} data groups ជា JSON file។`,
+    type: 'success',
+    to: '/settings',
+  })
+}
+
+function openImportPicker() {
+  importInput.value?.click()
+}
+
+async function importData(event) {
+  const [file] = event.target.files ?? []
+  event.target.value = ''
+  if (!file) return
+
+  try {
+    const backup = parseSmartLearnBackup(await file.text())
+    const count = Object.keys(backup.entries).length
+    const result = await Swal.fire({
+      title: 'Restore Backup?',
+      text: `ទិន្នន័យ ${count} groups នឹងសរសេរជាន់លើទិន្នន័យដែលមានឈ្មោះដូចគ្នា។`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Restore',
+      cancelButtonText: 'បោះបង់',
+      confirmButtonColor: '#2563eb',
+    })
+
+    if (!result.isConfirmed) return
+    restoreSmartLearnBackup(backup)
+
+    await Swal.fire({
+      title: 'Restore បានជោគជ័យ',
+      text: 'ទំព័រនឹង refresh ដើម្បីប្រើទិន្នន័យដែលបាន restore។',
+      icon: 'success',
+      confirmButtonColor: '#2563eb',
+    })
+    window.location.reload()
+  } catch {
+    Swal.fire({
+      title: 'Backup មិនត្រឹមត្រូវ',
+      text: 'សូមជ្រើសរើស JSON backup ដែលបាន export ពី SmartLearn។',
+      icon: 'error',
+      confirmButtonColor: '#2563eb',
+    })
+  }
 }
 </script>
 
@@ -119,6 +174,36 @@ function resetSettings() {
                 </span>
                 <input v-model="settings.publicProfile" type="checkbox" />
               </label>
+            </article>
+
+            <article class="settings-card settings-card--data">
+              <div class="settings-card__header">
+                <i class="bi bi-database-check"></i>
+                <div>
+                  <h2>Data Backup</h2>
+                  <p>រក្សាទុក ឬ restore ទិន្នន័យ SmartLearn ក្នុង browser ជា JSON។</p>
+                </div>
+              </div>
+
+              <div class="settings-data-actions">
+                <button class="btn btn-outline-primary" type="button" @click="exportData">
+                  <i class="bi bi-download me-2"></i>Export JSON
+                </button>
+                <button class="btn btn-outline-secondary" type="button" @click="openImportPicker">
+                  <i class="bi bi-upload me-2"></i>Import JSON
+                </button>
+                <input
+                  ref="importInput"
+                  class="visually-hidden"
+                  type="file"
+                  accept="application/json,.json"
+                  @change="importData"
+                />
+              </div>
+              <p class="settings-data-note mb-0">
+                <i class="bi bi-info-circle"></i>
+                Backup រួមមាន course, progress, quiz និង preferences ប៉ុន្តែមិនរួមបញ្ចូល active login session ទេ។
+              </p>
             </article>
 
             <div class="settings-actions">

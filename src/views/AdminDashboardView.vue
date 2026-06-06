@@ -1,5 +1,6 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import Swal from 'sweetalert2'
 import { useAuth } from '@/composables/useAuth'
 import { useCourseCatalog } from '@/composables/useCourseCatalog'
 import { useNotifications } from '@/composables/useNotifications'
@@ -19,6 +20,8 @@ const { adminCourses, catalogSummary, createCourse, deleteCourse, duplicateCours
 const { addNotification } = useNotifications()
 
 const editingCourseId = ref(null)
+const adminSearch = ref('')
+const adminStatus = ref('All')
 
 function createLessonForm(title = '') {
   return {
@@ -55,6 +58,20 @@ function createEmptyForm() {
 const form = reactive(createEmptyForm())
 
 const isEditing = computed(() => Boolean(editingCourseId.value))
+const filteredAdminCourses = computed(() => {
+  const keyword = adminSearch.value.trim().toLowerCase()
+
+  return adminCourses.value.filter((course) => {
+    const matchesSearch =
+      !keyword ||
+      [course.title, course.category, course.instructor]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword)
+    const matchesStatus = adminStatus.value === 'All' || course.status === adminStatus.value
+    return matchesSearch && matchesStatus
+  })
+})
 
 function splitLines(value) {
   return String(value ?? '')
@@ -143,7 +160,19 @@ function removeLesson(index) {
   form.lessons.splice(index, 1)
 }
 
-function removeCourse(course) {
+async function removeCourse(course) {
+  const result = await Swal.fire({
+    title: 'លុបវគ្គសិក្សា?',
+    text: `${course.title} នឹងត្រូវលុបចេញពី browser នេះ។`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'លុប',
+    cancelButtonText: 'បោះបង់',
+    confirmButtonColor: '#dc2626',
+  })
+
+  if (!result.isConfirmed) return
+
   deleteCourse(course.id)
   if (editingCourseId.value === course.id) resetForm()
 
@@ -157,7 +186,15 @@ function removeCourse(course) {
 
 function togglePublish(course) {
   const nextStatus = course.status === 'Draft' ? 'Published' : 'Draft'
-  updateCourse(course.id, { status: nextStatus })
+  const updatedCourse = updateCourse(course.id, { status: nextStatus })
+  if (!updatedCourse) return
+
+  addNotification({
+    title: nextStatus === 'Published' ? 'បាន Publish វគ្គសិក្សា' : 'បានប្តូរទៅ Draft',
+    message: `${course.title} ឥឡូវមានស្ថានភាព ${nextStatus}។`,
+    type: 'info',
+    to: '/admin',
+  })
 }
 
 function copyCourse(course) {
@@ -421,8 +458,25 @@ function copyCourse(course) {
               <span class="badge text-bg-primary">{{ adminCourses.length }}</span>
             </div>
 
-            <div v-if="adminCourses.length" class="admin-course-list">
-              <article v-for="course in adminCourses" :key="course.id" class="admin-course-row admin-course-row--rich">
+            <div v-if="adminCourses.length" class="admin-catalog-toolbar mb-4">
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input
+                  v-model="adminSearch"
+                  class="form-control"
+                  type="search"
+                  placeholder="ស្វែងរក course..."
+                />
+              </div>
+              <select v-model="adminStatus" class="form-select" aria-label="Filter course status">
+                <option value="All">ស្ថានភាពទាំងអស់</option>
+                <option value="Published">Published</option>
+                <option value="Draft">Draft</option>
+              </select>
+            </div>
+
+            <div v-if="filteredAdminCourses.length" class="admin-course-list">
+              <article v-for="course in filteredAdminCourses" :key="course.id" class="admin-course-row admin-course-row--rich">
                 <img v-if="course.image" :src="course.image" :alt="course.title" />
                 <div>
                   <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
@@ -451,6 +505,9 @@ function copyCourse(course) {
               </article>
             </div>
 
+            <p v-else-if="adminCourses.length" class="text-secondary mb-0">
+              មិនមាន course ត្រូវនឹងការស្វែងរក ឬ filter នេះទេ។
+            </p>
             <p v-else class="text-secondary mb-0">មិនទាន់មាន course ដែលបង្កើតដោយ admin ទេ។</p>
           </div>
         </div>

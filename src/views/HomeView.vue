@@ -8,10 +8,10 @@ const { allCourses } = useCourseCatalog()
 const featuredCourses = computed(() => allCourses.value.slice(0, 3))
 
 const stats = [
-  { icon: 'bi-people', value: '៥.៦k+', label: 'សិស្សសកម្ម' },
-  { icon: 'bi-play-btn', value: '១៤៣', label: 'មេរៀនវីដេអូ' },
-  { icon: 'bi-terminal', value: '៩+', label: 'Practice Labs' },
-  { icon: 'bi-star', value: '៤.៨', label: 'ពិន្ទុមធ្យម' },
+  { icon: 'bi-people', value: '៥.៦k+', label: 'សិស្សសកម្ម', tone: 'blue' },
+  { icon: 'bi-play-btn', value: '១៤៣', label: 'មេរៀនវីដេអូ', tone: 'green' },
+  { icon: 'bi-terminal', value: '៩+', label: 'បន្ទប់អនុវត្ត', tone: 'violet' },
+  { icon: 'bi-star', value: '៤.៨', label: 'ពិន្ទុមធ្យម', tone: 'amber' },
 ]
 
 const learningPaths = [
@@ -46,12 +46,12 @@ const workflowSteps = [
   <section class="landing-stats-section">
     <div class="container">
       <div class="landing-stats">
-        <div v-for="stat in stats" :key="stat.label" class="stat-card">
-            <i class="bi" :class="stat.icon"></i>
-            <div>
-              <strong>{{ stat.value }}</strong>
-              <span>{{ stat.label }}</span>
-            </div>
+        <div v-for="stat in stats" :key="stat.label" class="stat-card landing-stat-card" :class="`landing-stat-card--${stat.tone}`">
+          <i class="bi" :class="stat.icon"></i>
+          <div>
+            <strong>{{ stat.value }}</strong>
+            <span>{{ stat.label }}</span>
+          </div>
         </div>
       </div>
     </div>
